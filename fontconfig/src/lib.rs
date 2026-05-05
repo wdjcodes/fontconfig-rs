@@ -227,6 +227,13 @@ impl<'fc> Pattern<'fc> {
         }
     }
 
+    /// Add a charset to this pattern
+    pub fn add_charset(&mut self, val: CharSet) {
+        unsafe {
+            ffi_dispatch!(LIB, FcPatternAddCharSet, self.pat, FC_CHARSET.as_ptr(), val.char_set);
+        }
+    }
+
     /// Get string the value for a key from this pattern.
     pub fn get_string<'a>(&'a self, name: &'a CStr) -> Option<&'a str> {
         unsafe {
@@ -628,6 +635,28 @@ impl FromStr for FontFormat {
             "PFR" => Ok(FontFormat::PFR),
             "Windows FNT" => Ok(FontFormat::WindowsFNT),
             _ => Err(UnknownFontFormat(s.to_string())),
+        }
+    }
+}
+
+/// A safe wrapper around fontconfig's `FcCharSet`
+#[repr(C)]
+pub struct CharSet {
+    char_set: *mut FcCharSet,
+}
+
+impl CharSet {
+    /// Creates an empt char set by calling `FcCharSetCreate()`
+    pub fn create() -> Self {
+        unsafe {
+            Self { char_set: ffi_dispatch!(LIB, FcCharSetCreate,) }
+        }
+    }
+
+    /// Add specified char to the charset
+    pub fn add_char(&mut self, c: char) {
+        unsafe {
+            ffi_dispatch!(LIB, FcCharSetAddChar, self.char_set, c as u32);
         }
     }
 }
